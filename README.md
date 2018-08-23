@@ -133,27 +133,27 @@ While that is underway, go back to your local desktop and open phore-qt.
 
 ### More complex situations (ignore if you are installing a single masternode on a new VPS)
 
-If you wish to install more than one masternode on the same VPS, you can add a -c parameter to tell the script how many to configure, so for example this would install three Phore masternodes:
+If you wish to install more than one masternode on the same VPS, you can add a -c parameter to tell the script how many to configure, so for example this would install three Phore masternodes (all entered on one line):
 
 ```bash
-git clone https://github.com/phoreproject/vps.git && cd vps
-./install.sh -p phore -c 3
+git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3
 ```
 
-If you already have your masternode private keys, you can add them as shown below:
+If you already have your masternode private keys, you can add them as shown below (all entered on one line):
 
 ```bash
-git clone https://github.com/phoreproject/vps.git && cd vps
-./install.sh -p phore -c 3 --key **PRIVATE KEY 01** --key2 **PRIVATE KEY 02** --key3 **PRIVATE KEY 03**
+git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 --key **PRIVATE KEY 01** --key2 **PRIVATE KEY 02** --key3 **PRIVATE KEY 03**
 ```
 Using this command, you can skip the step for "Configure masternode configuration files", because the command above adds the masternode private keys to the masternode configuration files.
 
 
-If you are upgrading your masternode(s) to a new release, you can add a -u parameter:
+If you are upgrading your masternode(s) to a new release, you should first remove the old version of the VPS script so that the new one you download is tagged with the latest version, and then you add a -u parameter to upgrade existing nodes:
 
 ```bash
-git clone https://github.com/phoreproject/vps.git && cd vps
-./install.sh -p phore -u
+rm -rf /root/
+```
+```bash
+git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -u
 ```
 
 The project is configured to use the latest official release of the Phore masternode code, and we will update this project each time a new release is issued, but without downloading the latest version of this project and using the -u parameter, the script will not update an existing Phore node that is already installed.
