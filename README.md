@@ -142,7 +142,7 @@ In these cases, you can skip "Configure masternode configuration files" below.
   cat /tmp/phore_masternode.conf
   ```
   and add these lines to your masternode.conf.
-  
+
 - If you want to generate masternode private key within masternode installation
   Use this command
   ```bash
@@ -157,30 +157,41 @@ In these cases, you can skip "Configure masternode configuration files" below.
 
 ### More complex situations (ignore if you are installing a single masternode on a new VPS)
 
-If you wish to install more than one masternode on the same VPS, you can add a -c parameter to tell the script how many to configure, so for example this would install three Phore masternodes (all entered on one line):
+- If you wish to install more than one masternode on the same VPS
+  You can add a -c parameter to tell the script how many to configure, so for example this would install three Phore masternodes (all entered on one line):
 
-```bash
-git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3
-```
+  ```bash
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3
+  ```
 
-If you already have your masternode private keys, you can add them as shown below (all entered on one line):
+- If you already have your masternode private keys, you can add them as shown below (all entered on one line):
 
-```bash
-git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 --key **PRIVATE KEY 01** --key2 **PRIVATE KEY 02** --key3 **PRIVATE KEY 03**
-```
-Using this command, you can skip the step for "Configure masternode configuration files", because the command above adds the masternode private keys to the masternode configuration files.
+  ```bash
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 --key **PRIVATE KEY 01** --key2 **PRIVATE KEY 02** --key3 **PRIVATE KEY 03**
+  ```
+  Using this command, you can skip the step for "Configure masternode configuration files", because the command above adds the masternode private keys to the masternode configuration files.
 
+- If you are adding new masternode, (and if you installed 2 masternodes already)
+  ```
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3
+  ```
+  if you want to use --key option, add --key3 **MASTERNODE PRIVKEY 03**. You are able to use
+  ```
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 -g -x
+  ```
+  for new 3rd masternode.
+  
+- If you are upgrading your masternode(s) to a new release
+  You should first remove the old version of the VPS script so that the new one you download is tagged with the latest version, and then you add a -u parameter to upgrade existing nodes:
 
-If you are upgrading your masternode(s) to a new release, you should first remove the old version of the VPS script so that the new one you download is tagged with the latest version, and then you add a -u parameter to upgrade existing nodes:
+  ```bash
+  rm -rf /root/
+  ```
+  ```bash
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -u
+  ```
 
-```bash
-rm -rf /root/
-```
-```bash
-git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -u
-```
-
-The project is configured to use the latest official release of the Phore masternode code, and we will update this project each time a new release is issued, but without downloading the latest version of this project and using the -u parameter, the script will not update an existing Phore node that is already installed.
+  The project is configured to use the latest official release of the Phore masternode code, and we will update this project each time a new release is issued, but without downloading the latest version of this project and using the -u parameter, the script will not update an existing Phore node that is already installed.
 
 ## Configure Phore Wallet
 ### Step1 - Create Collateral Transaction
@@ -381,9 +392,20 @@ You can start and stop masternode client manually. Enter this commands.
 /usr/local/bin/phore-cli -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1 stop
 ```
 
+if use this command, masternode client will restart automatically in 5sec.
+To stop completely,
+```
+service phore_n1 stop
+```
+
 ### To start
 ```
 /usr/local/bin/phored -daemon -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1
+```
+
+If you stopped service "phore_n1", use
+```
+service phore_n1 start
 ```
 
 ## Options of this script
