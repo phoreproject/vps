@@ -447,7 +447,7 @@ function generate_privkey() {
 	echo -e "rpcuser=test\nrpcpassword=passtest" >> ${MNODE_CONF_BASE}/${CODENAME}_test.conf
   mkdir -p ${MNODE_DATA_BASE}/${CODENAME}_test
   ${CODENAME}d -daemon -conf=${MNODE_CONF_BASE}/${CODENAME}_test.conf -datadir=${MNODE_DATA_BASE}/${CODENAME}_test
-  sleep 5
+  sleep 20
 
 	for NUM in $(seq 1 ${count}); do
     if [ -z "${PRIVKEY[${NUM}]}" ]; then
