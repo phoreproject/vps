@@ -726,6 +726,11 @@ function final_call() {
 		echo "** Your nodes are starting up. If you haven't set masternode private key, Don't forget to change the masternodeprivkey later."
 		${MNODE_HELPER}_${CODENAME}
 	fi
+  echo "**ALL YOUR MASTERNODE CONFIGURATION IS HERE. INPUT THESE LINES TO YOUR MASTERNODE.CONF**"
+  cat /tmp/${CODENAME}_masternode.conf
+  echo "**This configuration lines are on /tmp/${CODENAME}_masternode.conf. You can check this file with**"
+  echo "cat /tmp/${CODENAME}_masternode.conf"
+  echo ""
 	tput sgr0
 
 }
