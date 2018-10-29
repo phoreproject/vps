@@ -123,7 +123,7 @@ If you have your masternode private key, please use this (you can generate maste
 ```bash
 git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -k **PRIVATE KEY**
 ```
-Using this command, you can skip "Configure masternode configuration files" below, because the command abopve adds the masternode private key to the masternode configuration files.
+Using this command, you can skip "Configure masternode configuration files" below, because the command above adds the masternode private key to the masternode configuration files.
 
 This prepares the system and installs the Phore Masternode daemon. This includes downloading the latest Phore masternode release, creating a swap file, configuring the firewall, and compiling the Phore Masternode from source code. This process takes about 10-15 minutes.
 
