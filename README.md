@@ -180,7 +180,7 @@ In these cases, you can skip "Configure masternode configuration files" below.
   git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 -g -x
   ```
   for new 3rd masternode.
-  
+
 - If you are upgrading your masternode(s) to a new release
   You should first remove the old version of the VPS script so that the new one you download is tagged with the latest version, and then you add a -u parameter to upgrade existing nodes:
 
@@ -317,8 +317,8 @@ To check the status of your masternode, please enter this command in the VPS ter
 The output will look like this:
 ```
 {
-  "version": 1030301,
-  "protocolversion": 70004,
+  "version": 1040400,
+  "protocolversion": 70005,
   "walletversion": 61000,
   "balance": 0.00000000,
   "privatesend_balance": 0.00000000,
@@ -385,6 +385,24 @@ Your Phore masternode is now set up and running! Depending on how many masternod
 <img src="docs/images/masternode_vps/rewards.png" alt="rewards" class="inline"/>
 
 ## Tips
+
+### Check masternode status on VPS Server
+You can check your masternode status on VPS server. Use this command.
+```
+/usr/local/bin/phore-cli -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1 masternode status
+```
+If it returns
+```
+{
+  "txhash": "a7eba991be786ce80948e9099e26f6a816317b2142f9e5e12abea357f885d0f2",
+  "outputidx": 1,
+  "netaddr": "[2001:19f0:5c01:457:2044::6]:11771",
+  "addr": "PEtMbHEuqo1QHs7Xy2wCTTmugAuemyd2mU",
+  "status": 4,
+  "message": "Masternode successfully started"
+}
+```
+like this, Your masternode is successfully started(Please check txhash, outputidx are same as your masternode.conf).
 
 You can start and stop masternode client manually. Enter this commands.
 ### To stop
