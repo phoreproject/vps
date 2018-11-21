@@ -7,8 +7,8 @@
 #  ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 #                                                              ╚╗ @marsmensch 2016-2018 ╔╝
 #
-# version 	v0.9.9
-# date    	2018-08-23
+# version 	v1.0.0
+# date    	2018-11-21
 #
 # function:	part of the masternode scripts, source the proper config file
 #
@@ -24,12 +24,13 @@
 # Useful variables
 declare -r CRYPTOS=`ls -l config/ | egrep '^d' | awk '{print $9}' | xargs echo -n; echo`
 declare -r DATE_STAMP="$(date +%y-%m-%d-%s)"
-declare -r SCRIPTPATH=$( cd $(dirname ${BASH_SOURCE[0]}) > /dev/null; pwd -P )
+declare -r SCRIPTPATH="$( cd $(dirname ${BASH_SOURCE[0]}) > /dev/null; pwd -P )"
 declare -r MASTERPATH="$(dirname "${SCRIPTPATH}")"
-declare -r SCRIPT_VERSION="v0.9.9"
+declare -r SCRIPT_VERSION="v1.0.0"
 declare -r SCRIPT_LOGFILE="/tmp/nodemaster_${DATE_STAMP}_out.log"
 declare -r IPV4_DOC_LINK="https://www.vultr.com/docs/add-secondary-ipv4-address"
 declare -r DO_NET_CONF="/etc/network/interfaces.d/50-cloud-init.cfg"
+declare -r NETWORK_BASE_TAG="$(dd if=/dev/urandom bs=2 count=1 2>/dev/null | od -x -A n | sed -e 's/^[[:space:]]*//g')"
 
 function showbanner() {
   echo $(tput bold)$(tput setaf 2)
@@ -205,10 +206,10 @@ function create_sentinel_setup() {
   for NUM in $(seq 1 ${count}); do
     if [ ! -f "${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf" ]; then
       echo "* Creating sentinel configuration for ${CODENAME} masternode number ${NUM}" &>> ${SCRIPT_LOGFILE}
-      echo "dash_conf=${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf"                      > {SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
-      echo "network=mainnet" >> {SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
-      echo "db_name=${SENTINEL_BASE}/database/${CODENAME}_${NUM}_sentinel.db"           >> {SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
-      echo "db_driver=sqlite" >> {SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
+      echo "dash_conf=${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf"                      > ${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
+      echo "network=mainnet"                                                            >> ${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
+      echo "db_name=${SENTINEL_BASE}/database/${CODENAME}_${NUM}_sentinel.db"           >> ${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
+      echo "db_driver=sqlite"                                                           >> ${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
     fi
   done
 
@@ -262,7 +263,6 @@ function validate_netchoice() {
 #    directory (eg. /etc/masternodes/${CODENAME} and replaces the existing placeholders if possible */
 #
 function create_mn_configuration() {
-
   # always return to the script root
   cd ${SCRIPTPATH}
 
@@ -318,7 +318,7 @@ function create_mn_configuration() {
     sed -e "s/XXX_GIT_PROJECT_XXX/${CODENAME}/" -e "s/XXX_NUM_XXY/${NUM}]/" -e "s/XXX_NUM_XXX/${NUM}/" -e "s/XXX_PASS_XXX/${PASS}/" -e "s/XXX_IPV6_INT_BASE_XXX/[${IPV6_INT_BASE}/" -e "s/XXX_NETWORK_BASE_TAG_XXX/${NETWORK_BASE_TAG}/" -e "s/XXX_MNODE_INBOUND_PORT_XXX/${MNODE_INBOUND_PORT}/" -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
     if [ -z "${PRIVKEY[${NUM}]}" ]; then
       if [ "$startnodes" -eq 1 ]; then
-        #uncomment masternode= and masternodeprivkey= so the node can autostart and sync
+        # uncomment masternode= and masternodeprivkey= so the node can autostart and sync
         sed 's/\(^.*masternode\(\|privkey\)=.*$\)/#\1/' -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
       fi
     fi
@@ -331,6 +331,7 @@ function create_mn_configuration() {
 function create_control_configuration() {
   # delete any old stuff that's still around
   rm -f /tmp/${CODENAME}_masternode.conf &>> ${SCRIPT_LOGFILE}
+
   # create one line per masternode with the data we have
   for NUM in $(seq 1 ${count}); do
     if [ -n "${PRIVKEY[${NUM}]}" ]; then
@@ -522,6 +523,7 @@ function source_config() {
     fi
     echo "Stay tuned!"
     echo ""
+
     # show a hint for MANUAL IPv4 configuration
     if [ "${net}" -eq 4 ]; then
       NETWORK_TYPE=4
@@ -532,10 +534,12 @@ function source_config() {
       echo "See the following link for instructions how to add multiple ipv4 addresses on vultr:"
       echo "${IPV4_DOC_LINK}"
     fi
+
     # sentinel setup
     if [ "$sentinel" -eq 1 ]; then
       echo "I will also generate a Sentinel configuration for you."
     fi
+
     # start nodes after setup
     if [ "$startnodes" -eq 1 ]; then
       echo "I will start your masternodes after the installation."
@@ -558,15 +562,17 @@ function source_config() {
     if [ "$update" -eq 0 ]; then
       create_mn_user
       create_mn_dirs
-      # sentinel setup
-      if [ "$sentinel" -eq 1 ]; then
-        echo "* Sentinel setup chosen" &>> ${SCRIPT_LOGFILE}
-        create_sentinel_setup
-      fi
+
       # private key initialize
       if [ "$generate" -eq 1 ]; then
         echo "Generating masternode private key" &>> ${SCRIPT_LOGFILE}
         generate_privkey
+      fi
+
+      # sentinel setup
+      if [ "$sentinel" -eq 1 ]; then
+        echo "* Sentinel setup chosen" &>> ${SCRIPT_LOGFILE}
+        create_sentinel_setup
       fi
       configure_firewall
       create_mn_configuration
@@ -605,21 +611,21 @@ function build_mn_from_source() {
   if [ ! -f ${MNODE_DAEMON} ] || [ "$update" -eq 1 ]; then
     # create code directory if it doesn't exist
     if [ ! -d ${SCRIPTPATH}/${CODE_DIR} ]; then
-      mkdir -p ${SCRIPTPATH}/${CODE_DIR}                &>> ${SCRIPT_LOGFILE}
+      mkdir -p ${SCRIPTPATH}/${CODE_DIR}                 &>> ${SCRIPT_LOGFILE}
     fi
     # if coin directory (CODENAME) exists, we remove it, to make a clean git clone
     if [ -d ${SCRIPTPATH}/${CODE_DIR}/${CODENAME} ]; then
       echo "deleting ${SCRIPTPATH}/${CODE_DIR}/${CODENAME} for clean cloning" &>> ${SCRIPT_LOGFILE}
-      rm -rf ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}      &>> ${SCRIPT_LOGFILE}
+      rm -rf ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}       &>> ${SCRIPT_LOGFILE}
     fi
-    cd ${SCRIPTPATH}/${CODE_DIR}                        &>> ${SCRIPT_LOGFILE}
-    git clone ${GIT_URL} ${CODENAME}                    &>> ${SCRIPT_LOGFILE}
-    cd ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}            &>> ${SCRIPT_LOGFILE}
+    mkdir -p ${CODE_DIR} && cd ${SCRIPTPATH}/${CODE_DIR} &>> ${SCRIPT_LOGFILE}
+    git clone ${GIT_URL} ${CODENAME}                     &>> ${SCRIPT_LOGFILE}
+    cd ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}             &>> ${SCRIPT_LOGFILE}
     echo "* Checking out desired GIT tag: ${release}"
-    git checkout ${release}                             &>> ${SCRIPT_LOGFILE}
+    git checkout ${release}                              &>> ${SCRIPT_LOGFILE}
 
     if [ "$update" -eq 1 ]; then
-      echo "update given, deleting the old daemon NOW!" &>> ${SCRIPT_LOGFILE}
+      echo "update given, deleting the old daemon NOW!"  &>> ${SCRIPT_LOGFILE}
       rm -f ${MNODE_DAEMON}
       # old daemon must be removed before compilation. Would be better to remove it afterwards, however not possible with current structure
       if [ -f ${MNODE_DAEMON} ]; then
