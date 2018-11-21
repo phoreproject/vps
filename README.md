@@ -13,7 +13,7 @@ This masternode installation script vastly simplifies the setup of a Phore maste
 Some notes and requirements:
 
 * Script has only been tested on a Vultr VPS, but should work almost anywhere where IPv6 addresses are available
-* Currently only Ubunto 16.04 Linux is supported
+* Currently only Ubuntu 16.04, 18.04 LTS Linux is supported
 * This script needs to run as root or with sudo, the masternodes will and should not!
 
 This project was forked from https://github.com/masternodes/vps. @marsmensch (Florian) is the primary author behind this VPS installation script for masternodes. If you would like to donate to him, you can use the BTC address below
@@ -28,7 +28,7 @@ BTC  33ENWZ9RCYBG7nv6ac8KxBUSuQX64Hx3x3
 
 ## How to get VPS server
 
-For new masternode owners, **Vultr** is recommended as a VPS hosting provider, but other providers that allow direct root SSH login access and offer Ubunto 16.04 may work.
+For new masternode owners, **Vultr** is recommended as a VPS hosting provider, but other providers that allow direct root SSH login access and offer Ubuntu 16.04, 18.04 LTS may work.
 
 You can use the following referral link to sign up with Vultr for VPS hosting:
 
@@ -118,18 +118,41 @@ Enter this command to copy the Masternode installation script and install a sing
 git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore
 ```
 
-If you have your masternode private key, please use this (you can generate masternode private key with Step 2 below).
-
-```bash
-git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -k **PRIVATE KEY**
-```
-Using this command, you can skip "Configure masternode configuration files" below, because the command abopve adds the masternode private key to the masternode configuration files.
-
 This prepares the system and installs the Phore Masternode daemon. This includes downloading the latest Phore masternode release, creating a swap file, configuring the firewall, and compiling the Phore Masternode from source code. This process takes about 10-15 minutes.
 
 <img src="docs/images/masternode_vps/install-the-desired-masternode-and-amount.png" alt="VPS configuration" class="inline"/>
 
 While that is underway, go back to your local desktop and open phore-qt.
+
+### Preinput masternode private key within installation (you can generate masternode private key with Step 2 below).
+ In these cases, you can skip "Configure masternode configuration files" below.
+- If you already generated masternode private key
+  Enter this command.
+  ```bash
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -k **PRIVATE KEY**
+  ```
+   **PRIVATE KEY** means your generated masternode private key. For example,
+  ```bash
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -k 87AqVXXXXXERNJxqBGdSS9LDS2vXXXXX5RdiiNd1zM7YAM7SHWX
+  ```
+  In this script, you can find configuration in masternode.conf in your PC.
+  enter this to check it.
+  ```bash
+  cat /tmp/phore_masternode.conf
+  ```
+  and add these lines to your masternode.conf.
+
+- If you want to generate masternode private key within masternode installation
+  Use this command
+  ```bash
+  git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -g
+  ```
+  And you can check generated private key in PuTTY. In this script, you can find configuration in masternode.conf in your PC.
+  enter this to check it.
+  ```bash
+  cat /tmp/phore_masternode.conf
+  ```
+  and add these lines to your masternode.conf.
 
 ### More complex situations (ignore if you are installing a single masternode on a new VPS)
 
@@ -144,8 +167,19 @@ If you already have your masternode private keys, you can add them as shown belo
 ```bash
 git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 --key **PRIVATE KEY 01** --key2 **PRIVATE KEY 02** --key3 **PRIVATE KEY 03**
 ```
+
 Using this command, you can skip the step for "Configure masternode configuration files", because the command above adds the masternode private keys to the masternode configuration files.
 
+If you are adding new masternode, (and if you installed 2 masternodes already)
+
+```
+git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3
+```
+if you want to use --key option, add --key3 **MASTERNODE PRIVKEY 03**. You are able to use
+```
+git clone https://github.com/phoreproject/vps.git && cd vps && ./install.sh -p phore -c 3 -g -x
+```
+for new 3rd masternode.
 
 If you are upgrading your masternode(s) to a new release, you should first remove the old version of the VPS script so that the new one you download is tagged with the latest version, and then you add a -u parameter to upgrade existing nodes:
 
@@ -185,7 +219,6 @@ Copy this value to a text file. It will be needed for both the phore configurati
 If you are setting up multiple masternodes, repeat this step for each one. Each time you run the masternode genkey command it will give you a new private key--it doesn't matter which one you use, but it is important that it is unique for each masternode and that the VPS phore configuration file and wallet masternode configuration file match (see below).
 
 ### Step 3 - Masternode Outputs
-
 This will give you the rest of the information you need to configure your masternode in your Phore wallet--the transaction ID and the output index.
 
 ```bash
@@ -204,6 +237,7 @@ When the script finishes, it will look similar to this:
 <img src="docs/images/masternode_vps/end-of-installation.png" alt="installation ended" class="inline"/>
 
 You only have a few steps remaining to complete your masternode configuration.
+
 ## Configure masternode configuration files
 Since this installation method supports multiple masternodes, the phore configuration files have a node number added to them (e.g., phore_n1.conf, phore_n2.conf), stored in the /etc/masternodes directory. If you have a single masternode on the VPS, you will only need to edit /etc/masternodes/phore_n1.conf.
 
@@ -262,6 +296,7 @@ The image below shows another example using an IPv4 IP address. If you followed 
 <img src="docs/images/masternode_vps/masternode-conf.png" alt="editing masternode.conf" class="inline"/>
 
 If you are running multiple masternodes, you need to add one of these lines for each masternode, and make sure the private key on each line matches the corresponding private key you entered in the VPS phore configuration file for that masternode.
+
 ## Check syncing status of masternode
 The masternode cannot complete activation until it is fully synced with the Phore blockchain network.
 
@@ -273,12 +308,12 @@ To check the status of your masternode, please enter this command in the VPS ter
 The output will look like this:
 ```
 {
-  "version": 1010000,
-  "protocolversion": 7002,
+  "version": 1040500,
+  "protocolversion": 70005,
   "walletversion": 61000,
   "balance": 0.00000000,
   "privatesend_balance": 0.00000000,
-  "blocks": 176209,
+  "blocks": 506209,
   "timeoffset": 0,
   "connections": 44,
   "proxy": "",
@@ -312,7 +347,6 @@ We're looking at the *blocks*, and need that to be the latest block in the block
 Once your masternode has synced up to the latest block, go to next step. The syncing process may take 15-30 minutes or more as the Phore blockchain grows. You can keep checking progress with the command above, by pressing the up arrow and Enter to repeat it.
 
 ## Start Masternode
-
 Go to the debug console of your Phore wallet **[Tools->Debug Console]** and enter the following command, replacing **mn-alias** with the name of the masternode in the Alias column of the Masternodes tab:
 
 ```
@@ -339,6 +373,65 @@ It should say ENABLED, and within an hour, the timer in the Active column should
 Your Phore masternode is now set up and running! Depending on how many masternodes there are, it may take 12-24 hours before you see your first masternode reward--this is normal and rewards should come at more regular intervals after the first one.
 
 <img src="docs/images/masternode_vps/rewards.png" alt="rewards" class="inline"/>
+
+## Tips
+ You can start and stop masternode client manually. Enter this commands.
+
+### Check masternode status on VPS Server
+You can check your masternode status on VPS server. Use this command.
+
+ ```
+ /usr/local/bin/phore-cli -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1 masternode status
+ ```
+ If it returns
+ ```
+ {
+   "txhash": "a7eba991be786ce80948e9099e26f6a816317b2142f9e5e12abea357f885d0f2",
+   "outputidx": 1,
+   "netaddr": "[2001:19f0:5c01:457:2044::6]:11771",
+   "addr": "PEtMbHEuqo1QHs7Xy2wCTTmugAuemyd2mU",
+   "status": 4,
+   "message": "Masternode successfully started"
+ }
+ ```
+
+ like this, Your masternode is successfully started(Please check txhash, outputidx are same as your masternode.conf).
+
+### To stop
+```
+/usr/local/bin/phore-cli -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1 stop
+```
+if use above command, masternode client will restart automatically in 5sec.
+To stop completely,
+```
+service phore_n1 stop
+```
+
+ ### To start
+```
+/usr/local/bin/phored -daemon -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1
+```
+
+If you stopped service "phore_n1", use
+```
+service phore_n1 start
+```
+
+ ## Options of this script
+ The _install.sh_ script support the following parameters:
+ | Long Option  | Short Option | Values              | Description                                                         |
+| :----------- | :----------- | ------------------- | ------------------------------------------------------------------- |
+| --project    | -p           | project, ex. "phore"| shortname for the project                                           |
+| --net        | -n           | "4" / "6"           | ip type for masternode. (ipv)6 is default                           |
+| --release    | -r           | e.g. "tags/v1.3.3.1"| a specific git tag/branch, defaults to latest tested                |
+| --count      | -c           | number              | amount of masternodes to be configured                              |
+| --update     | -u           | --                  | update specified masternode daemon, combine with -p flag            |
+| --sentinel   | -s           | --                  | install and configure sentinel for node monitoring                  |
+| --wipe       | -w           | --                  | uninstall & wipe all related master node data, combine with -p flag |
+| --help       | -h           | --                  | print help info                                                     |
+| --startnodes | -x           | --                  | starts masternode(s) after installation                             |
+| --key        | -k           | masternode privkey  | preinput masternode private key to configuration files              |
+| --generate   | -g           | --                  | generate and preinput masternode private key                        |
 
 ## Issues and Questions
 Please open a GitHub Issue if there are problems with this installation method. Many Phore team members activel support people installing masternodes and can provide assistance in the Phore Discord channel.
