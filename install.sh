@@ -408,7 +408,7 @@ function generate_privkey() {
   echo -e "rpcuser=test\nrpcpassword=passtest" >> ${MNODE_CONF_BASE}/${CODENAME}_test.conf
   mkdir -p ${MNODE_DATA_BASE}/${CODENAME}_test
   ${CODENAME}d -daemon -conf=${MNODE_CONF_BASE}/${CODENAME}_test.conf -datadir=${MNODE_DATA_BASE}/${CODENAME}_test
-  sleep 5
+  sleep 15
 
   for NUM in $(seq 1 ${count}); do
     if [ -z "${PRIVKEY[${NUM}]}" ]; then
@@ -677,6 +677,13 @@ function final_call() {
     echo ""
     echo "** Your nodes are starting up. If you haven't set masternode private key, Don't forget to change the masternodeprivkey later."
     ${MNODE_HELPER}_${CODENAME}
+  fi
+  if [ "$update" -eq 0 ]; then
+    echo "**ALL YOUR MASTERNODE CONFIGURATION IS HERE. INPUT THESE LINES TO YOUR MASTERNODE.CONF**"
+    cat /tmp/${CODENAME}_masternode.conf
+    echo "**This configuration lines are on /tmp/${CODENAME}_masternode.conf. You can check this file with**"
+    echo "cat /tmp/${CODENAME}_masternode.conf"
+    echo ""
   fi
   tput sgr0
 }
