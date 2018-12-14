@@ -273,10 +273,11 @@ function validate_netchoice() {
         exit 1;
     fi
     
-    # generate the required ipv6 config
+    # Generate IPv4 Address
     if [ "${net}" -eq 4 ]; then
         IPV6_INT_BASE="#NEW_IPv4_ADDRESS_FOR_MASTERNODE_NUMBER"
-        echo "IPv4 address generation needs to be done manually atm!"  &>> ${SCRIPT_LOGFILE}
+        IPV4_ADDRESS=$(curl -s inet-ip.info)
+        echo "IPv4 address: ${IPV4_ADDRESS} was configured with inet-ip.info. You can't host multiple ${CODENAME} masternodes with same IPv4 address: ${IPV4_ADDRESS}."  &>> ${SCRIPT_LOGFILE}
     fi	# end ifneteq4
     
 }
@@ -340,7 +341,11 @@ function create_mn_configuration() {
             fi
         else :
         fi
-        sed -e "s/XXX_GIT_PROJECT_XXX/${CODENAME}/" -e "s/XXX_NUM_XXY/${NUM}]/" -e "s/XXX_NUM_XXX/${NUM}/" -e "s/XXX_PASS_XXX/${PASS}/" -e "s/XXX_IPV6_INT_BASE_XXX/[${IPV6_INT_BASE}/" -e "s/XXX_NETWORK_BASE_TAG_XXX/${NETWORK_BASE_TAG}/" -e "s/XXX_MNODE_INBOUND_PORT_XXX/${MNODE_INBOUND_PORT}/" -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
+        if [ ${net} -eq 4 ]; then
+           sed -e "s/XXX_GIT_PROJECT_XXX/${CODENAME}/" -e "s/XXX_NUM_XXY//" -e "s/XXX_NUM_XXX/${NUM}/" -e "s/XXX_PASS_XXX/${PASS}/" -e "s/XXX_IPV6_INT_BASE_XXX/[${IPV4_ADDRESS}/" -e "s/:XXX_NETWORK_BASE_TAG_XXX:://" -e "s/XXX_MNODE_INBOUND_PORT_XXX/${MNODE_INBOUND_PORT}/" -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
+        else
+           sed -e "s/XXX_GIT_PROJECT_XXX/${CODENAME}/" -e "s/XXX_NUM_XXY/${NUM}]/" -e "s/XXX_NUM_XXX/${NUM}/" -e "s/XXX_PASS_XXX/${PASS}/" -e "s/XXX_IPV6_INT_BASE_XXX/[${IPV6_INT_BASE}/" -e "s/XXX_NETWORK_BASE_TAG_XXX/${NETWORK_BASE_TAG}/" -e "s/XXX_MNODE_INBOUND_PORT_XXX/${MNODE_INBOUND_PORT}/" -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
+        fi
         if [ -z "${PRIVKEY[${NUM}]}" ]; then
             if [ "$startnodes" -eq 1 ]; then
                 #uncomment masternode= and masternodeprivkey= so the node can autostart and sync
