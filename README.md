@@ -216,19 +216,19 @@ Now go to the *Send* tab, paste the copied address, and send *exactly* 10,000 PH
 Go to the *Masternodes* Tab and click **ADD MASTERNODE** button.
 
 This will open *New Masternode Alias* window.
-<img src="docs/images/masternode_vps/newmasternodealias.png" alt="New Masternode Alias window" class="inline"/>
+<img src="docs/images/masternode_vps/step1-newmasternodealias.png" alt="New Masternode Alias window" class="inline"/>
 
 Click **AUTOFIL OUTPUTS** button. It autofills Priv Key, Output, Output ID.
 If Output(ID) isn't filled, wait 1~2 mins.
 Then enter *Alias Name*, *VPS IP*, *Priv Key*.
-*Alias Name* means your masternode name(Only for identify), *VPS IP* is your VPS server IP which was copied in [End of installations](#End of installations).
+*Alias Name* means your masternode name(Only for identify), *VPS IP* is your VPS server IP which was copied in [End of installations](#End-of-installations).
 In this example, *Alias Name* is phore-mn01 and *VPS IP* is [2001:19f0:7001:fd4:e2b7::1]:11771, *Priv Key* is 87KsYyqumG9HJjG000008jtpSEQUKSuEWkBG9xov19cuEsXH5vB.
 
-<img src="docs/images/masternode_vps/newmasternodealias_inputed.png" alt="New Masternode Alias inputed" class="inline"/>
+<img src="docs/images/masternode_vps/step1-newmasternodealias_inputed.png" alt="New Masternode Alias inputed" class="inline"/>
 
 If you are setting up multiple masternodes, repeat this step for each one.
 
-*Tips:* If you want, you can generate Priv Key here, but you will need to edit masternode configuration file manually on VPS(See [Add masternode private key](#Add masternode private key)).
+*Tips:* If you want, you can generate Priv Key here, but you will need to edit masternode configuration file manually on VPS(See [Add masternode private key](#Add-masternode-private-key)).
 
 ## Check syncing status of masternode
 
