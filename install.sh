@@ -33,7 +33,7 @@ declare -r DO_NET_CONF="/etc/network/interfaces.d/50-cloud-init.cfg"
 declare -r NETWORK_BASE_TAG="$(dd if=/dev/urandom bs=2 count=1 2>/dev/null | od -x -A n | sed -e 's/^[[:space:]]*//g')"
 
 function showbanner() {
-    
+
     echo $(tput bold)$(tput setaf 2)
   cat << "EOF"
  ███╗   ██╗ ██████╗ ██████╗ ███████╗███╗   ███╗ █████╗ ███████╗████████╗███████╗██████╗
@@ -46,7 +46,7 @@ function showbanner() {
 EOF
     echo "$(tput sgr0)$(tput setaf 3)Have fun, this is crypto after all!$(tput sgr0)"
     echo "$(tput setaf 6)Donations for @marsmensch (BTC): 33ENWZ9RCYBG7nv6ac8KxBUSuQX64Hx3x3"
-    
+
 }
 
 # /*
@@ -55,7 +55,7 @@ EOF
 # */
 #
 function get_confirmation() {
-    
+
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
     case "$response" in
@@ -66,14 +66,14 @@ function get_confirmation() {
             false
         ;;
     esac
-    
+
 }
 
 #
 # /* no parameters, displays the help message */
 #
 function show_help(){
-    
+
     clear
     showbanner
     echo "install.sh, version $SCRIPT_VERSION";
@@ -93,14 +93,14 @@ function show_help(){
     echo "-x or --startnodes: Start masternodes after installation to sync with blockchain";
     echo "-g or --generate: Generate masternode private key and use"
     exit 1;
-    
+
 }
 
 #
 # /* no parameters, checks if we are running on a supported Ubuntu release */
 #
 function check_distro() {
-    
+
     # currently only for Ubuntu 16.04 & 18.04
     if [[ -r /etc/os-release ]]; then
         . /etc/os-release
@@ -113,14 +113,14 @@ function check_distro() {
         echo "This script only supports Ubuntu 16.04 & 18.04 LTS, exiting."
         exit 1
     fi
-    
+
 }
 
 #
 # /* no parameters, installs the base set of packages that are required for all projects */
 #
 function install_packages() {
-    
+
     # development and build packages
     # these are common on all cryptos
     echo "* Package installation!"
@@ -131,19 +131,19 @@ function install_packages() {
     libboost-all-dev libssl-dev make autoconf libtool git apt-utils g++ \
     libprotobuf-dev pkg-config libudev-dev libqrencode-dev bsdmainutils \
     pkg-config libgmp3-dev libevent-dev jp2a pv virtualenv libdb4.8-dev libdb4.8++-dev  &>> ${SCRIPT_LOGFILE}
-    
+
     # only for 18.04 // openssl
     if [[ "${VERSION_ID}" == "18.04" ]] ; then
         apt-get -qqy -o=Dpkg::Use-Pty=0 -o=Acquire::ForceIPv4=true install libssl1.0-dev
     fi
-    
+
 }
 
 #
 # /* no parameters, creates and activates a swapfile since VPS servers often do not have enough RAM for compilation */
 #
 function swaphack() {
-    
+
     #check if swap is available
     if [ $(free | awk '/^Swap:/ {exit !$2}') ] || [ ! -f "/var/mnode_swap.img" ];then
         echo "* No proper swap, creating it"
@@ -159,14 +159,14 @@ function swaphack() {
     else
         echo "* All good, we have a swap"
     fi
-    
+
 }
 
 #
 # /* no parameters, creates and activates a dedicated masternode user */
 #
 function create_mn_user() {
-    
+
     # our new mnode unpriv user acc is added
     if id "${MNODE_USER}" >/dev/null 2>&1; then
         echo "user exists already, do nothing" &>> ${SCRIPT_LOGFILE}
@@ -174,14 +174,14 @@ function create_mn_user() {
         echo "Adding new system user ${MNODE_USER}"
         adduser --disabled-password --gecos "" ${MNODE_USER} &>> ${SCRIPT_LOGFILE}
     fi
-    
+
 }
 
 #
 # /* no parameters, creates a masternode data directory (one per masternode)  */
 #
 function create_mn_dirs() {
-    
+
     # individual data dirs for now to avoid problems
     echo "* Creating masternode directories"
     mkdir -p ${MNODE_CONF_BASE}
@@ -191,17 +191,17 @@ function create_mn_dirs() {
             mkdir -p ${MNODE_DATA_BASE}/${CODENAME}${NUM} &>> ${SCRIPT_LOGFILE}
         fi
     done
-    
+
 }
 
 #
 # /* no parameters, creates a sentinel config for a set of masternodes (one per masternode)  */
 #
 function create_sentinel_setup() {
-    
+
     SENTINEL_BASE=/usr/share/sentinel
     SENTINEL_ENV=/usr/share/sentinelenv
-    
+
     # if code directory does not exists, we create it clone the src
     if [ ! -d ${SENTINEL_BASE} ]; then
         cd /usr/share                                               &>> ${SCRIPT_LOGFILE}
@@ -214,11 +214,11 @@ function create_sentinel_setup() {
         git pull                      &>> ${SCRIPT_LOGFILE}
         rm -f rm sentinel.conf        &>> ${SCRIPT_LOGFILE}
     fi
-    
+
     # create a globally accessible venv and install sentinel requirements
     virtualenv --system-site-packages ${SENTINEL_BASE}      &>> ${SCRIPT_LOGFILE}
     ${SENTINEL_BASE}/bin/pip install -r requirements.txt    &>> ${SCRIPT_LOGFILE}
-    
+
     # create one sentinel config file per masternode
     for NUM in $(seq 1 ${count}); do
         if [ ! -f "${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf" ]; then
@@ -229,23 +229,23 @@ function create_sentinel_setup() {
             echo "db_driver=sqlite"                                        >> ${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf
         fi
     done
-    
+
     export SENTINEL_CONFIG=${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf; cd ${SENTINEL_BASE} && ${SENTINEL_ENV}/bin/python ${SENTINEL_BASE}/bin/sentinel.py
-    
-    
+
+
     echo "$(tput sgr0)$(tput setaf 3)Generated a Sentinel config for you. To activate Sentinel run:$(tput sgr0)"
     echo "$(tput sgr0)$(tput setaf 2)export SENTINEL_CONFIG=${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf; cd ${SENTINEL_BASE} && ${SENTINEL_ENV}/bin/python ${SENTINEL_BASE}/bin/sentinel.py$(tput sgr0)"
     echo ""
     echo "$(tput sgr0)$(tput setaf 2)If it works, add the command as cronjob:  $(tput sgr0)"
     echo "$(tput sgr0)$(tput setaf 2)* * * * * export SENTINEL_CONFIG=${SENTINEL_BASE}/${CODENAME}${NUM}_sentinel.conf; cd ${SENTINEL_BASE} && ${SENTINEL_ENV}/bin/python ${SENTINEL_BASE}/bin/sentinel.py >> /var/log/sentinel/sentinel-cron.log$(tput sgr0) 2>&1"
-    
+
 }
 
 #
 # /* no parameters, creates a minimal set of firewall rules that allows INBOUND masternode p2p & SSH ports */
 #
 function configure_firewall() {
-    
+
     echo "* Configuring firewall rules"
     # disallow everything except ssh and masternode inbound ports
     ufw default deny                          &>> ${SCRIPT_LOGFILE}
@@ -257,29 +257,29 @@ function configure_firewall() {
     ufw limit OpenSSH	                        &>> ${SCRIPT_LOGFILE}
     ufw --force enable                        &>> ${SCRIPT_LOGFILE}
     echo "* Firewall ufw is active and enabled on system startup"
-    
+
 }
 
 #
 # /* no parameters, checks if the choice of networking matches w/ this VPS installation */
 #
 function validate_netchoice() {
-    
+
     echo "* Validating network rules"
-    
+
     # break here of net isn't 4 or 6
     if [ ${net} -ne 4 ] && [ ${net} -ne 6 ]; then
         echo "invalid NETWORK setting, can only be 4 or 6!"
         exit 1;
     fi
-    
+
     # Generate IPv4 Address
     if [ "${net}" -eq 4 ]; then
         IPV6_INT_BASE="#NEW_IPv4_ADDRESS_FOR_MASTERNODE_NUMBER"
         IPV4_ADDRESS=$(curl -s inet-ip.info)
         echo "IPv4 address: ${IPV4_ADDRESS} was configured with inet-ip.info. You can't host multiple ${CODENAME} masternodes with same IPv4 address: ${IPV4_ADDRESS}."  &>> ${SCRIPT_LOGFILE}
     fi	# end ifneteq4
-    
+
 }
 
 #
@@ -287,17 +287,17 @@ function validate_netchoice() {
 #    directory (eg. /etc/masternodes/${CODENAME} and replaces the existing placeholders if possible */
 #
 function create_mn_configuration() {
-    
+
     # always return to the script root
     cd ${SCRIPTPATH}
-    
+
     # recode inputed private key to tmp.txt, check the keys
     for NUM in $(seq 1 ${count}); do
         if [ -n "${PRIVKEY[${NUM}]}" ]; then
             echo ${PRIVKEY[${NUM}]} >> tmp.txt
         fi
     done
-    
+
     if [ -f tmp.txt ]; then
         dup=$(sort -t 8 tmp.txt | uniq -c | sort -nr | head -1 | awk '{print substr($0, 7, 1)}')
         if [ 1 -ne "$dup" ]; then
@@ -308,15 +308,15 @@ function create_mn_configuration() {
         fi
         rm tmp.txt
     fi
-    
+
     # create one config file per masternode
     for NUM in $(seq 1 ${count}); do
         PASS=$(date | md5sum | cut -c1-24)
-        
+
         # we dont want to overwrite an existing config file
         if [ ! -f ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf ]; then
             echo "individual masternode config doesn't exist, generate it!"                  &>> ${SCRIPT_LOGFILE}
-            
+
             # if a template exists, use this instead of the default
             if [ -e config/${CODENAME}/${CODENAME}.conf ]; then
                 echo "custom configuration template for ${CODENAME} found, use this instead"                      &>> ${SCRIPT_LOGFILE}
@@ -325,11 +325,11 @@ function create_mn_configuration() {
                 echo "No ${CODENAME} template found, using the default configuration template"			          &>> ${SCRIPT_LOGFILE}
                 cp ${SCRIPTPATH}/config/default.conf ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf                  &>> ${SCRIPT_LOGFILE}
             fi
-            
+
             # replace placeholders
             echo "running sed on file ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf"                                &>> ${SCRIPT_LOGFILE}
         fi
-        
+
         # Write inputed private key to project.conf
         if [ -n "${PRIVKEY[${NUM}]}" ]; then
             if [ ${#PRIVKEY[${NUM}]} -eq 51 ]; then
@@ -353,17 +353,17 @@ function create_mn_configuration() {
             fi
         fi
     done
-    
+
 }
 
 #
 # /* no parameters, generates a masternode configuration file per masternode in the default */
 #
 function create_control_configuration() {
-    
+
     # delete any old stuff that's still around
     rm -f /tmp/${CODENAME}_masternode.conf &>> ${SCRIPT_LOGFILE}
-    
+
     # create one line per masternode with the data we have
     for NUM in $(seq 1 ${count}); do
         if [ -n "${PRIVKEY[${NUM}]}" ]; then
@@ -374,7 +374,7 @@ function create_control_configuration() {
             echo ${CODENAME}MN${NUM} [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT} MASTERNODE_PRIVKEY_FOR_${CODENAME}MN${NUM} COLLATERAL_TX_FOR_${CODENAME}MN${NUM} OUTPUT_NO_FOR_${CODENAME}MN${NUM} >> /tmp/${CODENAME}_masternode.conf
         fi
     done
-    
+
     # add well layout text for GUI Configuration
     rm -f /tmp/${CODENAME}_gui.conf &>> ${SCRIPT_LOGFILE}
 
@@ -384,45 +384,53 @@ function create_control_configuration() {
             PRIVKEY[${NUM}]=${PRIVKEY[${NUM}]:18}
             if [ "${net}" -eq 4 ]; then
                 cat >> /tmp/${CODENAME}_gui.conf <<EOF
+
 **************   ${CODENAME} Masternode ${NUM}   *****************
 Alias Name: ${CODENAME}MN${NUM}
 VPS IP: ${IPV4_ADDRESS}:${MNODE_INBOUND_PORT}
 Priv Key: ${PRIVKEY[${NUM}]}
+******************************************************************
 EOF
             else
                 cat >> /tmp/${CODENAME}_gui.conf <<EOF
+
 **************   ${CODENAME} Masternode ${NUM}   *****************
 Alias Name: ${CODENAME}MN${NUM}
 VPS IP: [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT}
 Priv Key: ${PRIVKEY[${NUM}]}
+******************************************************************
 EOF
             fi
         else
             if [ "${net}" -eq 4 ]; then
                 cat >> /tmp/${CODENAME}_gui.conf <<EOF
+
 **************   ${CODENAME} Masternode ${NUM}   *****************
 Alias Name: ${CODENAME}MN${NUM}
 VPS IP: ${IPV4_ADDRESS}:${MNODE_INBOUND_PORT}
 Priv Key: YOU NEED TO INPUT Masternode PrivKey to ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
-                EOF
+******************************************************************
+EOF
             else
                 cat >> /tmp/${CODENAME}_gui.conf <<EOF
+
 **************   ${CODENAME} Masternode ${NUM}   *****************
 Alias Name: ${CODENAME}MN${NUM}
 VPS IP: [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT}
 Priv Key: YOU NEED TO INPUT Masternode PrivKey to ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
+******************************************************************
 EOF
             fi
         fi
     done
-    
+
 }
 
 #
 # /* no parameters, generates a a pre-populated masternode systemd config file */
 #
 function create_systemd_configuration() {
-    
+
     echo "* (over)writing systemd config files for masternodes"
     # create one config file per masternode
     for NUM in $(seq 1 ${count}); do
@@ -453,27 +461,27 @@ StartLimitBurst=15
 WantedBy=multi-user.target
 EOF
     done
-    
+
 }
 
 #
 # /* set all permissions to the masternode user */
 #
 function set_permissions() {
-    
+
     # maybe add a sudoers entry later
     mkdir -p /var/log/sentinel &>> ${SCRIPT_LOGFILE}
     chown -R ${MNODE_USER}:${MNODE_USER} ${MNODE_CONF_BASE} ${MNODE_DATA_BASE} /var/log/sentinel ${SENTINEL_BASE}/database &>> ${SCRIPT_LOGFILE}
     # make group permissions same as user, so vps-user can be added to masternode group
     chmod -R g=u ${MNODE_CONF_BASE} ${MNODE_DATA_BASE} /var/log/sentinel &>> ${SCRIPT_LOGFILE}
-    
+
 }
 
 #
 # /* wipe all files and folders generated by the script for a specific project */
 #
 function wipe_all() {
-    
+
     echo "Deleting all ${project} related data!"
     rm -f /etc/masternodes/${project}_n*.conf
     rmdir --ignore-fail-on-non-empty -p /var/lib/masternodes/${project}*
@@ -481,7 +489,7 @@ function wipe_all() {
     rm -f ${MNODE_DAEMON}
     echo "DONE!"
     exit 0
-    
+
 }
 
 #
@@ -490,12 +498,12 @@ function wipe_all() {
 # */
 #
 function generate_privkey() {
-    
+
     echo -e "rpcuser=test\nrpcpassword=passtest" >> ${MNODE_CONF_BASE}/${CODENAME}_test.conf
     mkdir -p ${MNODE_DATA_BASE}/${CODENAME}_test
     ${CODENAME}d -daemon -conf=${MNODE_CONF_BASE}/${CODENAME}_test.conf -datadir=${MNODE_DATA_BASE}/${CODENAME}_test
     sleep 20
-    
+
     for NUM in $(seq 1 ${count}); do
         if [ -z "${PRIVKEY[${NUM}]}" ]; then
             PRIVKEY[${NUM}]=$(${CODENAME}-cli -conf=${MNODE_CONF_BASE}/${CODENAME}_test.conf -datadir=${MNODE_DATA_BASE}/${CODENAME}_test masternode genkey)
@@ -504,7 +512,7 @@ function generate_privkey() {
     ${CODENAME}-cli -conf=${MNODE_CONF_BASE}/${CODENAME}_test.conf -datadir=${MNODE_DATA_BASE}/${CODENAME}_test stop
     sleep 5
     rm -r ${MNODE_CONF_BASE}/${CODENAME}_test.conf ${MNODE_DATA_BASE}/${CODENAME}_test
-    
+
 }
 
 #
@@ -514,10 +522,10 @@ function generate_privkey() {
 # */
 #
 function cleanup_after() {
-    
+
     #apt-get -qqy -o=Dpkg::Use-Pty=0 --force-yes autoremove
     apt-get -qqy -o=Dpkg::Use-Pty=0 --allow-downgrades --allow-change-held-packages autoclean
-    
+
     echo "kernel.randomize_va_space=1" > /etc/sysctl.conf  &>> ${SCRIPT_LOGFILE}
     echo "net.ipv4.conf.all.rp_filter=1" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
     echo "net.ipv4.conf.all.accept_source_route=0" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
@@ -532,7 +540,7 @@ function cleanup_after() {
     echo "net.ipv4.tcp_syncookies=1" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
     echo "net.ipv4.icmp_ignore_bogus_error_responses=1" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
     sysctl -p
-    
+
 }
 
 #
@@ -541,17 +549,17 @@ function cleanup_after() {
 
 # source the default and desired crypto configuration files
 function source_config() {
-    
+
     SETUP_CONF_FILE="${SCRIPTPATH}/config/${project}/${project}.env"
-    
+
     # first things first, to break early if things are missing or weird
     check_distro
-    
+
     if [ -f ${SETUP_CONF_FILE} ]; then
         echo "Script version ${SCRIPT_VERSION}, you picked: $(tput bold)$(tput setaf 2) ${project} $(tput sgr0), running on Ubuntu ${VERSION_ID}"
         echo "apply config file for ${project}"	&>> ${SCRIPT_LOGFILE}
         source "${SETUP_CONF_FILE}"
-        
+
         # count is from the default config but can ultimately be
         # overwritten at runtime
         if [ -z "${count}" ]
@@ -559,7 +567,7 @@ function source_config() {
             count=${SETUP_MNODES_COUNT}
             echo "No number given, installing default number of nodes: ${SETUP_MNODES_COUNT}" &>> ${SCRIPT_LOGFILE}
         fi
-        
+
         # release is from the default project config but can ultimately be
         # overwritten at runtime
         if [ -z "$release" ]
@@ -567,14 +575,14 @@ function source_config() {
             release=${SCVERSION}
             echo "release empty, setting to project default: ${SCVERSION}"  &>> ${SCRIPT_LOGFILE}
         fi
-        
+
         # net is from the default config but can ultimately be
         # overwritten at runtime
         if [ -z "${net}" ]; then
             net=${NETWORK_TYPE}
             echo "net EMPTY, setting to default: ${NETWORK_TYPE}" &>> ${SCRIPT_LOGFILE}
         fi
-        
+
         # main block of function logic starts here
         # if update flag was given, delete the old daemon binary first & proceed
         if [ "$update" -eq 1 ]; then
@@ -591,7 +599,7 @@ function source_config() {
                 exit 1
             fi
         fi
-        
+
         echo "************************* Installation Plan *****************************************"
         echo ""
         if [ "$update" -eq 1 ]; then
@@ -611,7 +619,7 @@ function source_config() {
         echo ""
         echo "Stay tuned!"
         echo ""
-        
+
         # show a hint for MANUAL IPv4 configuration
         if [ "${net}" -eq 4 ]; then
             NETWORK_TYPE=4
@@ -620,12 +628,12 @@ function source_config() {
             echo "See the following link for instructions how to add multiple ipv4 addresses on vultr:"
             echo "${IPV4_DOC_LINK}"
         fi
-        
+
         # sentinel setup
         if [ "$sentinel" -eq 1 ]; then
             echo "I will also generate a Sentinel configuration for you."
         fi
-        
+
         # start nodes after setup
         if [ "$startnodes" -eq 1 ]; then
             echo "I will start your masternodes after the installation."
@@ -636,7 +644,7 @@ function source_config() {
         echo ""
         echo "*************************************************************************************"
         sleep 5
-        
+
         # main routine
         if [ "$update" -eq 0 ]; then
             prepare_mn_interfaces
@@ -648,13 +656,13 @@ function source_config() {
         if [ "$update" -eq 0 ]; then
             create_mn_user
             create_mn_dirs
-            
+
             # private key initialize
             if [ "$generate" -eq 1 ]; then
                 echo "Generating masternode private key" &>> ${SCRIPT_LOGFILE}
                 generate_privkey
             fi
-            
+
             # sentinel setup
             if [ "$sentinel" -eq 1 ]; then
                 echo "* Sentinel setup chosen" &>> ${SCRIPT_LOGFILE}
@@ -673,11 +681,11 @@ function source_config() {
         echo "required file ${SETUP_CONF_FILE} does not exist, abort!"
         exit 1
     fi
-    
+
 }
 
 function print_logo() {
-    
+
     # print ascii banner if a logo exists
     echo -e "* Starting the compilation process for ${CODENAME}, stay tuned"
     if [ -f "${SCRIPTPATH}/assets/$CODENAME.jpg" ]; then
@@ -685,7 +693,7 @@ function print_logo() {
     else
         jp2a -b --colors --width=56 ${SCRIPTPATH}/assets/default.jpg
     fi
-    
+
 }
 
 #
@@ -708,7 +716,7 @@ function build_mn_from_source() {
         cd ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}  &>> ${SCRIPT_LOGFILE}
         echo "* Checking out desired GIT tag: ${release}"
         git checkout ${release}                   &>> ${SCRIPT_LOGFILE}
-        
+
         if [ "$update" -eq 1 ]; then
             echo "update given, deleting the old daemon NOW!" &>> ${SCRIPT_LOGFILE}
             rm -f ${MNODE_DAEMON}
@@ -718,19 +726,19 @@ function build_mn_from_source() {
                 exit 1
             fi
         fi
-        
+
         # compilation starts here
         source ${SCRIPTPATH}/config/${CODENAME}/${CODENAME}.compile | pv -t -i0.1
     else
         echo "* Daemon already in place at ${MNODE_DAEMON}, not compiling"
     fi
-    
+
     # if it's not available after compilation, theres something wrong
     if [ ! -f ${MNODE_DAEMON} ]; then
         echo "COMPILATION FAILED! Please open an issue at https://github.com/phoreproject/vps/issues. Thank you!"
         exit 1
     fi
-    
+
 }
 
 #
@@ -752,20 +760,20 @@ function final_call() {
     echo "=> $(tput bold)$(tput setaf 2) All Data directories are in: ${MNODE_DATA_BASE} $(tput sgr0)"
     echo ""
     echo "$(tput bold)$(tput setaf 1)Important:$(tput sgr0) run $(tput setaf 2) /usr/local/bin/activate_masternodes_${CODENAME} $(tput sgr0) as root to activate your nodes."
-    
+
     # place future helper script accordingly
     if [ "$update" -eq 0 ]; then
         cp ${SCRIPTPATH}/scripts/activate_masternodes.sh ${MNODE_HELPER}_${CODENAME}
         echo "">> ${MNODE_HELPER}_${CODENAME}
-        
+
         for NUM in $(seq 1 ${count}); do
             echo "systemctl enable ${CODENAME}_n${NUM}" >> ${MNODE_HELPER}_${CODENAME}
             echo "systemctl restart ${CODENAME}_n${NUM}" >> ${MNODE_HELPER}_${CODENAME}
         done
-        
+
         chmod u+x ${MNODE_HELPER}_${CODENAME}
     fi
-    
+
     if [ "$startnodes" -eq 1 ]; then
         echo ""
         echo "** Your nodes are starting up. If you haven't set masternode private key, Don't forget to change the masternodeprivkey later."
@@ -780,39 +788,39 @@ function final_call() {
     echo "cat /tmp/${CODENAME}_gui.conf"
     echo ""
     tput sgr0
-    
+
 }
 
 #
 # /* no parameters, create the required network configuration. IPv6 is auto.  */
 #
 function prepare_mn_interfaces() {
-    
+
     # this allows for more flexibility since every provider uses another default interface
     # current default is:
     # * ens3 (vultr) w/ a fallback to "eth0" (Hetzner, DO & Linode w/ IPv4 only)
     #
-    
+
     # check for the default interface status
     if [ ! -f /sys/class/net/${ETH_INTERFACE}/operstate ]; then
         echo "Default interface doesn't exist, switching to eth0"
         export ETH_INTERFACE="eth0"
     fi
-    
+
     # check for the nuse case <3
     if [ -f /sys/class/net/ens160/operstate ]; then
         export ETH_INTERFACE="ens160"
     fi
-    
+
     # get the current interface state
     ETH_STATUS=$(cat /sys/class/net/${ETH_INTERFACE}/operstate)
-    
+
     # check interface status
     if [[ "${ETH_STATUS}" = "down" ]] || [[ "${ETH_STATUS}" = "" ]]; then
         echo "Default interface is down, fallback didn't work. Break here."
         exit 1
     fi
-    
+
     # DO ipv6 fix, are we on DO?
     # check for DO network config file
     if [ -f ${DO_NET_CONF} ]; then
@@ -823,12 +831,12 @@ function prepare_mn_interfaces() {
             ifdown ${ETH_INTERFACE}; ifup ${ETH_INTERFACE};
         fi
     fi
-    
+
     IPV6_INT_BASE="$(ip -6 addr show dev ${ETH_INTERFACE} | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^fe80 | grep -v ^::1 | cut -f1-4 -d':' | head -1)" &>> ${SCRIPT_LOGFILE}
-    
+
     validate_netchoice
     echo "IPV6_INT_BASE AFTER : ${IPV6_INT_BASE}" &>> ${SCRIPT_LOGFILE}
-    
+
     # user opted for ipv6 (default), so we have to check for ipv6 support
     # check for vultr ipv6 box active
     if [ -z "${IPV6_INT_BASE}" ] && [ ${net} -ne 4 ]; then
@@ -838,18 +846,18 @@ function prepare_mn_interfaces() {
         echo "${IPV4_DOC_LINK}"
         exit 1
     fi
-    
+
     # generate the required ipv6 config
     if [ "${net}" -eq 6 ]; then
         # vultr specific, needed to work
         sed -ie '/iface ${ETH_INTERFACE} inet6 auto/s/^/#/' ${NETWORK_CONFIG} &>> ${SCRIPT_LOGFILE}
-        
+
         # move current config out of the way first
         cp ${NETWORK_CONFIG} ${NETWORK_CONFIG}.${DATE_STAMP}.bkp &>> ${SCRIPT_LOGFILE}
-        
+
         # create the additional ipv6 interfaces, rc.local because it's more generic
         for NUM in $(seq 1 ${count}); do
-            
+
             # check if the interfaces exist
             ip -6 addr | grep -qi "${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}"
             if [ $? -eq 0 ]
@@ -869,7 +877,7 @@ function prepare_mn_interfaces() {
             fi
         done # end forloop
     fi # end ifneteq6
-    
+
 }
 
 ##################------------Menu()---------#####################################
@@ -1061,10 +1069,10 @@ source ${SCRIPTPATH}/config/default.env
 #################################################
 
 main() {
-    
+
     echo "starting" &> ${SCRIPT_LOGFILE}
     showbanner
-    
+
     # debug
     if [ "$debug" -eq 1 ]; then
         echo "********************** VALUES AFTER CONFIG SOURCING: ************************"
@@ -1087,10 +1095,10 @@ main() {
         echo "SETUP_MNODES_COUNT:   ${SETUP_MNODES_COUNT}"
         echo "END DEFAULTS => "
     fi
-    
+
     # source project configuration
     source_config ${project}
-    
+
     # debug
     if [ "$debug" -eq 1 ]; then
         echo "START PROJECT => "
@@ -1103,18 +1111,18 @@ main() {
         echo "RELEASE:              ${release}"
         echo "NETWORK_BASE_TAG:     ${NETWORK_BASE_TAG}"
         echo "END PROJECT => "
-        
+
         echo "START OPTIONS => "
         echo "RELEASE: ${release}"
         echo "PROJECT: ${project}"
         echo "SETUP_MNODES_COUNT: ${count}"
         echo "NETWORK_TYPE: ${NETWORK_TYPE}"
         echo "NETWORK_TYPE: ${net}"
-        
+
         echo "END OPTIONS => "
         echo "********************** VALUES AFTER CONFIG SOURCING: ************************"
     fi
-    
+
 }
 
 main "$@"
