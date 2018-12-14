@@ -7,8 +7,8 @@
 #  ╚═╝  ╚═══╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
 #                                                              ╚╗ @marsmensch 2016-2018 ╔╝
 #
-# version 	v0.9.9
-# date    	2018-08-23
+# version 	v1.0.0
+# date    	2018-12-14
 #
 # function:	part of the masternode scripts, source the proper config file
 #
@@ -16,7 +16,7 @@
 #               Run this script w/ the desired parameters. Leave blank or use -h for help.
 #
 #	Platforms:
-#               - Linux Ubuntu 16.04 LTS ONLY on a Vultr, Hetzner or DigitalOcean VPS
+#               - Linux Ubuntu ONLY 16.04/18.04 LTS on a Vultr, Hetzner or DigitalOcean VPS
 #               - Generic Ubuntu support will be added at a later point in time
 #
 # Twitter 	@marsmensch
@@ -26,7 +26,7 @@ declare -r CRYPTOS=`ls -l config/ | egrep '^d' | awk '{print $9}' | xargs echo -
 declare -r DATE_STAMP="$(date +%y-%m-%d-%s)"
 declare -r SCRIPTPATH="$( cd $(dirname ${BASH_SOURCE[0]}) > /dev/null; pwd -P )"
 declare -r MASTERPATH="$(dirname "${SCRIPTPATH}")"
-declare -r SCRIPT_VERSION="v0.9.9"
+declare -r SCRIPT_VERSION="v1.0.0"
 declare -r SCRIPT_LOGFILE="/tmp/nodemaster_${DATE_STAMP}_out.log"
 declare -r IPV4_DOC_LINK="https://www.vultr.com/docs/add-secondary-ipv4-address"
 declare -r DO_NET_CONF="/etc/network/interfaces.d/50-cloud-init.cfg"
@@ -372,6 +372,47 @@ function create_control_configuration() {
             echo ${CODENAME}MN${NUM} [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT} ${PRIVKEY[${NUM}]} COLLATERAL_TX_FOR_${CODENAME}MN${NUM} OUTPUT_NO_FOR_${CODENAME}MN${NUM} >> /tmp/${CODENAME}_masternode.conf
         else
             echo ${CODENAME}MN${NUM} [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT} MASTERNODE_PRIVKEY_FOR_${CODENAME}MN${NUM} COLLATERAL_TX_FOR_${CODENAME}MN${NUM} OUTPUT_NO_FOR_${CODENAME}MN${NUM} >> /tmp/${CODENAME}_masternode.conf
+        fi
+    done
+    
+    # add well layout text for GUI Configuration
+    rm -f /tmp/${CODENAME}_gui.conf &>> ${SCRIPT_LOGFILE}
+
+    for NUM in $(seq 1 ${count}); do
+        if [ -n "${PRIVKEY[${NUM}]}" ]; then
+            PRIVKEY[${NUM}]=$(cat ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf | grep masternodeprivkey)
+            PRIVKEY[${NUM}]=${PRIVKEY[${NUM}]:18}
+            if [ "${net}" -eq 4 ]; then
+                cat >> /tmp/${CODENAME}_gui.conf <<-EOF
+                    **************   ${CODENAME} Masternode ${NUM}   *****************
+                    Alias Name: ${CODENAME}MN${NUM}
+                    VPS IP: ${IPV4_ADDRESS}:${MNODE_INBOUND_PORT}
+                    Priv Key: ${PRIVKEY[${NUM}]}
+                EOF
+            else
+                cat >> /tmp/${CODENAME}_gui.conf <<-EOF
+                    **************   ${CODENAME} Masternode ${NUM}   *****************
+                    Alias Name: ${CODENAME}MN${NUM}
+                    VPS IP: [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT}
+                    Priv Key: ${PRIVKEY[${NUM}]}
+                EOF
+            fi
+        else
+            if [ "${net}" -eq 4 ]; then
+                cat >> /tmp/${CODENAME}_gui.conf <<-EOF
+                    **************   ${CODENAME} Masternode ${NUM}   *****************
+                    Alias Name: ${CODENAME}MN${NUM}
+                    VPS IP: ${IPV4_ADDRESS}:${MNODE_INBOUND_PORT}
+                    Priv Key: YOU NEED TO INPUT Masternode PrivKey to ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
+                EOF
+            else
+                cat >> /tmp/${CODENAME}_gui.conf <<-EOF
+                    **************   ${CODENAME} Masternode ${NUM}   *****************
+                    Alias Name: ${CODENAME}MN${NUM}
+                    VPS IP: [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT}
+                    Priv Key: YOU NEED TO INPUT Masternode PrivKey to ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
+                EOF
+            fi
         fi
     done
     
@@ -734,6 +775,9 @@ function final_call() {
     cat /tmp/${CODENAME}_masternode.conf
     echo "**This configuration lines are on /tmp/${CODENAME}_masternode.conf. You can check this file with**"
     echo "cat /tmp/${CODENAME}_masternode.conf"
+    cat /tmp/${CODENAME}_gui.conf
+    echo "**For GUI Installation user, configuration files are on /tmp/${CODENAME}_gui.conf. You can check this file with**"
+    echo "cat /tmp/${CODENAME}_gui.conf"
     echo ""
     tput sgr0
     
