@@ -574,10 +574,8 @@ function source_config() {
         # show a hint for MANUAL IPv4 configuration
         if [ "${net}" -eq 4 ]; then
             NETWORK_TYPE=4
-            echo "WARNING:"
-            echo "You selected IPv4 for networking but there is no automatic workflow for this part."
-            echo "This means you will have some mamual work to do to after this configuration run."
-            echo ""
+            echo "CAUTION:"
+            echo "You selected IPv4 for networking. If you want to use 2nd IPv4 address, please edit each configuration file manually. Because this script only uses primary IPv4 address."
             echo "See the following link for instructions how to add multiple ipv4 addresses on vultr:"
             echo "${IPV4_DOC_LINK}"
         fi
