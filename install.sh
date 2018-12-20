@@ -817,6 +817,11 @@ function prepare_mn_interfaces() {
         export ETH_INTERFACE="ens160"
     fi
 
+    # check for scaleway
+    if [ -f /sys/class/net/ens2/operstate ]; then
+        export ETH_INTERFACE="ens2"
+    fi
+
     # get the current interface state
     ETH_STATUS=$(cat /sys/class/net/${ETH_INTERFACE}/operstate)
 
