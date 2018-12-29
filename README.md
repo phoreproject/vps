@@ -341,7 +341,6 @@ Then press <font color="Green">Y</font> to save, and press Enter to exit.
 Finally, close and restart your Phore wallet so that it will have the new masternode configuration.
 
 ## Tips
-
 ### Check masternode status on VPS Server
 You can check your masternode status on VPS server. Use this command.
 ```
@@ -380,6 +379,20 @@ service phore_n1 stop
 If you stopped service "phore_n1", use
 ```
 service phore_n1 start
+```
+
+### To resync
+```
+service phore_n1 stop
+```
+then start phore daemon with resync mode
+```
+/usr/local/bin/phored -pid=/var/lib/masternodes/phore1/phore.pid -conf=/etc/masternodes/phore_n1.conf -datadir=/var/lib/masternodes/phore1 -resync
+```
+
+You can check syncing status with
+```
+phore-cli -conf=/etc/masternodes/phore_n1.conf getinfo
 ```
 
 ## Options of this script
