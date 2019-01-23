@@ -160,119 +160,88 @@ The project is configured to use the latest official release of the Phore master
 
 ## Configure Phore Wallet
 ### Step1 - Create Collateral Transaction
-Once the wallet is open on your local computer, generate a new receive address and label it however you want to identify your masternode rewards (e.g., Phore-MN-1). This label will show up in your transactions each time you receive a block reward.
+Once the wallet is open on your local computer, select the 'Receive' tab and generate a new receive address for the amount of 10,000 PHR. You may label it however you want to identify your masternode rewards (e.g., Phore-MN-1). This label will show up in your transactions each time you receive a block reward.
+
 
 Click the Request payment button, and copy the address.
 
-<img src="docs/images/masternode_vps/step1-newaddress.png" alt="making new address" class="inline"/>
+![alt text](https://i.imgur.com/L3Ka6cg.png "Logo Title Text 1")
 
-Now go to the Send tab, paste the copied address, and send *exactly* 10,000 PHR to it in a single transaction. Wait for it to confirm on the blockchain. This is the collateral transaction that will be locked and paired with your new masternode. If you are setting up more than one masternode at one time, repeat this process for each one.
+Now go to the ‘Send' tab, paste the copied address, and send *exactly* 10,000 PHR to it in a single transaction. This is the collateral transaction that will be locked and paired with your new masternode. If you are setting up more than one masternode at a time, repeat this process for each one.
 
-<img src="docs/images/masternode_vps/step1-send10kphr.png" alt="sending 10kPHR" class="inline"/>
+*You must wait for at least one confirmation (approx. 1 minute) on the blockchain before moving on to the next step!*
 
-### Step 2 - Generate Masternode Private Key
-Go to the **[Tools > Debug Console]** and enter these commands below:
+![alt text](https://i.imgur.com/g00xJTC.png "Logo Title Text 1")
 
-```bash
-masternode genkey
-```
-This will produce a masternode private key:
+### Step 2 - Local Masternode Setup
 
-<img src="docs/images/masternode_vps/step2-masternodegenkey.png" alt="generating masternode private key" class="inline"/>
+After waiting for at least one confirmation on the collateral transaction we just created, select the 'Masternodes' tab and click on the 'Add Masternode' button.
 
-Copy this value to a text file. It will be needed for both the phore configuration file on the masternode VPS, and the masternode configuration file on the computer with the controlling Phore wallet.
+![alt text](https://i.imgur.com/QHECool.png "Logo Title Text 1")
 
-If you are setting up multiple masternodes, repeat this step for each one. Each time you run the masternode genkey command it will give you a new private key--it doesn't matter which one you use, but it is important that it is unique for each masternode and that the VPS phore configuration file and wallet masternode configuration file match (see below).
+Under ‘Alias Name’ enter the name of your Masternode (in my case it is ‘Phore-MN-1’). Then click both ‘Autofill Privkey’ and ‘Autofill Outputs’; this will automatically fill the ‘Priv Key’, ‘Output’ and ‘Output ID’ fields.
 
-### Step 3 - Masternode Outputs
-
-This will give you the rest of the information you need to configure your masternode in your Phore wallet--the transaction ID and the output index.
-
-```bash
-masternode outputs
-```
-
-<img src="docs/images/masternode_vps/step3-masternodeoutputs.png" alt="getting transaction id" class="inline"/>
-
-The long string of characters is the *Transaction ID* for your masternode collateral transaction. The number after the long string is the *Index*. Copy and paste these into the text file next to the private key you generated in Step 2.
-
-If you have multiple masternodes in the same wallet and have done the 10,000 PHR transactions for each of them, masternode outputs will display transaction IDs and indexes for each one. You can choose which private key to go with each transaction ID and index, as long as they are all different, and you make sure the corresponding lines in masternode.conf and the VPS phore configuration files match (see below).
+The ‘VPS IP’ field will be blank, we will get to that in a moment.
 
 ## End of installations
+
 When the script finishes, it will look similar to this:
 
-<img src="docs/images/masternode_vps/end-of-installation.png" alt="installation ended" class="inline"/>
+![alt text](https://i.imgur.com/FipCs5R.png "Logo Title Text 1")
 
-You only have a few steps remaining to complete your masternode configuration.
-## Configure masternode configuration files
-Since this installation method supports multiple masternodes, the phore configuration files have a node number added to them (e.g., phore_n1.conf, phore_n2.conf), stored in the /etc/masternodes directory. If you have a single masternode on the VPS, you will only need to edit /etc/masternodes/phore_n1.conf.
+You only have a few steps remaining to complete your Masternode configuration.
+
+## Configure Masternode Configuration Files
+
+Since this installation method supports multiple masternodes, the Phore configuration files have a node number added to them (e.g., phore_n1.conf, phore_n2.conf), stored in the /etc/masternodes directory. If you have a single masternode on the VPS, you will only need to edit /etc/masternodes/phore_n1.conf.
 
 To open phore_n1.conf for editing, enter these commands:
-```bash
-sudo apt-get install nano
-nano /etc/masternodes/phore_n1.conf
-```
-The next step adds your masternode private key.
 
-## Add masternode private key
-What you need to change is only masternode private key.
-(We recommend using IPv6 which is the default, but if you choose IPv4 when you ran the installation script, please edit #NEW_IPv4_ADDRESS_FOR_MASTERNODE_NUMBER to your VPS IP address).
-After typing the nano command, you will see something similar to this.
+```sudo apt-get install nano```
 
-<img src="docs/images/masternode_vps/insert-your-masternode-private-key.png" alt="add private key" class="inline"/>
+```nano /etc/masternodes/phore_n1.conf```
 
-Copy the masternode private key from the text file you saved it in, and replace HERE_GOES_YOUR_MASTERNODE_KEY_FOR_MASTERNODE_phore_1 with that private key (this typically begins with an 8).
+You will see something similar to this:
 
-While you have this file opened, copy the information that follows after masternodeaddr=, starting with the open bracket. This is the masternode's IPv6 address and port, and will be needed for the wallet's masternode.conf file.
+![alt text](https://i.imgur.com/qxYIvHJ.png "Logo Title Text 1")
 
-Once you have your masternode private key entered, press <font color="Green">Ctrl+X</font> .
-Then press <font color="Green">Y</font> to save, and press Enter to exit.
+Copy the IP from ```masternodeaddr=``` (highlighted in red in the image above) and paste it into the ‘VPS IP’ field of the local wallet Masternode setup. Every field should now be full. Copy your ‘Priv Key’ (we will need this soon) and click ‘OK’.
 
-Finally, close and restart your Phore wallet so that it will have the new masternode configuration.
+![alt text](https://i.imgur.com/7EQ19Fh.png "Logo Title Text 1")
 
-## Start your masternodes
-A script for starting all masternodes on the VPS has been created at /usr/local/bin/activate_masternodes_phore.sh.
-Run this command after your masternode configuration written above.
+The next step will be to add your masternode private key.
 
-```bash
-/usr/local/bin/activate_masternodes_phore
-```
+## Add Masternode Private Key
 
-The masternode daemons will start and begin loading the Phore blockchain.
+Back in Putty, you only need to change the masternode private key. (We recommend using IPv6 which is the default, but if you choose IPv4 when you ran the installation script, please edit #NEW_IPv4_ADDRESS_FOR_MASTERNODE_NUMBER to your VPS IP address). 
 
-## Finishing Wallet Configuration & Activate Masternode
-To activate your nodes from your wallet, one of the last steps is to add a line for the masternode in the masternode.conf file. This file has the following format, with each value separated with a space:
+Replace HERE_GOES_YOUR_MASTERNODE_KEY_FOR_MASTERNODE_phore_1 with the copy of your ‘Priv Key’ from the local wallet.
 
-* alias IP:Port masternodeprivatekey collateral_transaction_ID collateral_output_index
-* alias - A short name you use to identify the masternode, you can choose this name as long as it is without spaces (e.g., Phore-MN-1)
-* IP:Port - The IP address (either IPv6 or IPv4) and the Port where the masternode is running, separated by a colon (:). You copied this from the phore.conf file on the VPS.
-* collateral_transaction_ID: This is the transaction ID you copied from masternode outputs.
-* collateral_output_index: This is the index you copied from masternode outputs.
+![alt text](https://i.imgur.com/D6Z8sIe.png "Logo Title Text 1")
 
-From the wallet menu, edit the local wallet **masternode.conf** file. **[Tools > Open Masternode Configuration File]**
-Add the MN conf line, like the example below to the masternode.conf file. Save it, and close the file. It will look like the following example, using your values for each of the fields above. A common mistake is mixing up the private key and the collateral transaction ID--to make this easier, the private key usually begins with an 8.
+Once you have your masternode private key entered, press ‘Ctrl+X’ to exit, press ‘Y’ to save when prompted, and press ‘Enter’ to exit.
 
-example.
-```
-Phore-MN-1 [2001:19f0:5001:ca6:2085::1]:11771 88xrxxxxxxxxxxxxxxxxxxxxxxx7K 6b4c9xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx7ee23 0
-```
+Once you exit the configuration screen, you can start your masternode.
 
-The image below shows another example using an IPv4 IP address. If you followed this guide you are probably using an IPv6 address that looks like the line above.
+## Start your Masternode
 
-<img src="docs/images/masternode_vps/masternode-conf.png" alt="editing masternode.conf" class="inline"/>
+A script for starting all masternodes on the VPS has been created at /usr/local/bin/activate_masternodes_phore.sh. Run this command after your masternode configuration written above. To do this, enter:
 
-If you are running multiple masternodes, you need to add one of these lines for each masternode, and make sure the private key on each line matches the corresponding private key you entered in the VPS phore configuration file for that masternode.
-## Check syncing status of masternode
-The masternode cannot complete activation until it is fully synced with the Phore blockchain network.
+```/usr/local/bin/activate_masternodes_phore```
 
-To check the status of your masternode, please enter this command in the VPS terminal. If you have multiple masternodes on the same VPS, you can change n1 to n2 etc. below to check the status of each one.
+The masternode daemons will start and begin loading the Phore Blockchain.
 
-```bash
-/usr/local/bin/phore-cli -conf=/etc/masternodes/phore_n1.conf getinfo
-```
+## Check Syncing Status of Masternode
+
+The masternode cannot complete activation until it is fully synced with the Phore Blockchain network.
+
+To check the status of your masternode, please enter the command below in the VPS terminal. If you have multiple masternodes on the same VPS, you can change n1 to n2 etc. to check the status of each one.
+
+```/usr/local/bin/phore-cli -conf=/etc/masternodes/phore_n1.conf getinfo```
+
 The output will look like this:
-```
-{
+
+```{
   "version": 1010000,
   "protocolversion": 7002,
   "walletversion": 61000,
@@ -305,44 +274,31 @@ The output will look like this:
 }
 ```
 
-We're looking at the *blocks*, and need that to be the latest block in the blockchain. You can check your local wallet to see the latest block by hovering over the green check mark.
+We're looking at the blocks, and need that to be the latest block in the blockchain. You can check your local wallet to see the latest block by hovering over the green check mark.
 
-<img src="docs/images/masternode_vps/check-blocks-number.png" alt="checking syncing status" class="inline"/>
+![alt text](https://i.imgur.com/xPv4XmT.png "Logo Title Text 1")
 
-Once your masternode has synced up to the latest block, go to next step. The syncing process may take 15-30 minutes or more as the Phore blockchain grows. You can keep checking progress with the command above, by pressing the up arrow and Enter to repeat it.
+Once your masternode has synced up to the latest block, go to next step. The syncing process may take 15-30 minutes, or more, as the Phore Blockchain grows. You can keep checking progress with the command above, by pressing the ‘Up’ arrow and the ‘Enter’ key to repeat it (or by pasting the command in again).
 
 ## Start Masternode
 
-Go to the debug console of your Phore wallet **[Tools->Debug Console]** and enter the following command, replacing **mn-alias** with the name of the masternode in the Alias column of the Masternodes tab:
+When your Masternode is fully synced on the VPS, go back to the ‘Masternode’ tab of the local wallet and click ‘Start Alias’. 
 
-```
-startmasternode alias false mn-alias
-```
+![alt text](https://i.imgur.com/JPPxFcm.png "Logo Title Text 1")
 
-You may need to unlock the wallet **[Settings->Unlock Wallet]** before you run this command, entering your passphrase. You can lock the wallet after it is finished.
+Click ‘Yes’ to start your Masternode.
 
-If everything was setup correctly, after entering the command you will see something like this:
-```
-{
-"overall" : "Successfully started 1 masternodes, failed to start 0, total 1",
-"detail" : {
-"status" : {
-"alias" : "phore-mn01",
-"result" : "successful"
-}
-```
-If you are setting up multiple masternodes, repeat this for each one. You can now close the debug console, return the Masternodes tab and check the status:
-<img src="docs/images/masternode_vps/check-masternode-status.png" alt="checking syncing status" class="inline"/>
+Once you have done this, you should get a confirmation that the Masternode has started successfully!
 
-It should say ENABLED, and within an hour, the timer in the Active column should start increasing.
+![alt text](https://i.imgur.com/C8UkC1i.png "Logo Title Text 1")
 
-Your Phore masternode is now set up and running! Depending on how many masternodes there are, it may take 12-24 hours before you see your first masternode reward--this is normal and rewards should come at more regular intervals after the first one.
+The ‘Status’ should now say ‘Enabled’, and within an hour the timer in the ‘Active’ column should start increasing.
 
-<img src="docs/images/masternode_vps/rewards.png" alt="rewards" class="inline"/>
+Congratulations, your Phore Masternode is now set up and running! Depending on how many masternodes there are, it may take 12-24 hours before you see your first masternode reward. This is normal and rewards should come at more regular intervals after the first one.
 
 ## Issues and Questions
-Please open a GitHub Issue if there are problems with this installation method. Many Phore team members activel support people installing masternodes and can provide assistance in the Phore Discord channel.
-Here is a Discord invitation:
+
+Please open a GitHub Issue  here: https://github.com/phoreproject/vps/issues if there are problems with this installation method. Many Phore team members actively support people installing masternodes and can provide assistance in the Phore Discord channel. Here is a Discord invitation:
 
 https://discord.gg/sbgdcdv
 
