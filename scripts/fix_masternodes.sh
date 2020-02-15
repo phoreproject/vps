@@ -21,7 +21,7 @@ fixMasternode() {
   echo "Waiting for masternode initialization"
   sleep 120
   echo "Waiting for hot node status..."
-  grep -q "activation" <(timeout 7200 tail -f debug.log)
+  sed '/activation/q' <(tail -n 0 -f debug.log)
   echo "Masternode $1 is recovered, please start masternode from wallet."
   cd
 }
@@ -37,7 +37,7 @@ checkStatus() {
       echo "Masternode $1 successfully started"
       echo "Nothing to be done."
     ;;
-    *"Hot node, waiting for remote activation"*)
+    *"activation"*)
       echo "Masternode $1 waiting for remote activation"
       echo "Please start masternode from wallet and try again"
     ;;
