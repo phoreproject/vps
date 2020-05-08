@@ -17,6 +17,7 @@
 #
 #	Platforms:
 #               - Linux Ubuntu 16.04 LTS ONLY on a Vultr, Hetzner or DigitalOcean VPS
+#               - Linux Ubuntu 18.04 and 20.04 LTS when using --download option.
 #               - Generic Ubuntu support will be added at a later point in time
 #
 # Twitter 	@marsmensch
@@ -26,7 +27,7 @@ declare -r CRYPTOS=`ls -l config/ | egrep '^d' | awk '{print $9}' | xargs echo -
 declare -r DATE_STAMP="$(date +%y-%m-%d-%s)"
 declare -r SCRIPTPATH=$( cd $(dirname ${BASH_SOURCE[0]}) > /dev/null; pwd -P )
 declare -r MASTERPATH="$(dirname "${SCRIPTPATH}")"
-declare -r SCRIPT_VERSION="v0.9.4"
+declare -r SCRIPT_VERSION="v0.9.5"
 declare -r SCRIPT_LOGFILE="/tmp/nodemaster_${DATE_STAMP}_out.log"
 declare -r IPV4_DOC_LINK="https://www.vultr.com/docs/add-secondary-ipv4-address"
 declare -r DO_NET_CONF="/etc/network/interfaces.d/50-cloud-init.cfg"
@@ -69,7 +70,7 @@ function show_help(){
     showbanner
     echo "install.sh, version $SCRIPT_VERSION";
     echo "Usage example:";
-    echo "install.sh (-p|--project) string [(-h|--help)] [(-n|--net) int] [(-c|--count) int] [(-r|--release) string] [(-w|--wipe)] [(-u|--update)] [(-x|--startnodes)]";
+    echo "install.sh (-p|--project) string [(-h|--help)] [(-n|--net) int] [(-c|--count) int] [(-r|--release) string] [(-w|--wipe)] [(-u|--update)] [(-x|--startnodes)] [(-i|--download) string]";
     echo "Options:";
     echo "-h or --help: Displays this information.";
     echo "-p or --project string: Project to be installed. REQUIRED.";
@@ -81,6 +82,7 @@ function show_help(){
     echo "-u or --update: Update a specific masternode daemon. Combine with the -p option";
     echo "-r or --release: Release version to be installed.";
 	echo "-x or --startnodes: Start masternodes after installation to sync with blockchain";
+	echo "-i or --download: Download masternode daemon instead of building it";
     exit 1;
 }
 
@@ -88,16 +90,29 @@ function show_help(){
 # /* no parameters, checks if we are running on a supported Ubuntu release */
 #
 function check_distro() {
-	# currently only for Ubuntu 16.04
+	# currently only for Ubuntu 16.04 or 18.04 and 20.04 with --download switch
 	if [[ -r /etc/os-release ]]; then
 		. /etc/os-release
-		if [[ "${VERSION_ID}" != "16.04" ]]; then
-			echo "This script only supports ubuntu 16.04 LTS, exiting."
-			exit 1
+
+        if [[ "${ID}" == "ubuntu" ]]; then
+            if [[ "${VERSION_ID}" == "16.04" ]]; then
+		        return;
+            fi
+
+            if [[ "${VERSION_ID}" == "18.04" ]] && [[ "$download" -eq 1 ]]; then
+                return;
+            fi
+
+            if [[ "${VERSION_ID}" == "20.04" ]] && [[ "$download" -eq 1 ]]; then
+                return;
+            fi
 		fi
+
+		echo "This script only supports Ubuntu 16.04 LTS or Ubuntu 18.04 / 20.04 LTS with --download option."
+		exit 1
 	else
 		# no, thats not ok!
-		echo "This script only supports ubuntu 16.04 LTS, exiting."
+		echo "This script only supports ubuntu 16.04 LTS or 18.04 / 20.04 LTS with --download option, exiting."
 		exit 1
 	fi
 }
@@ -529,17 +544,24 @@ function source_config() {
 
 		# main routine
 		print_logo
-        	prepare_mn_interfaces
-        	swaphack
-        	install_packages
-		build_mn_from_source
+        prepare_mn_interfaces
+        swaphack
+
+        if [[ "$download" -eq 1 ]]; then
+            echo "Download binary from url" &>> ${SCRIPT_LOGFILE}
+            download_bin_from_url
+		else
+		    install_packages
+		    echo "Configured to build mn from source" &>> ${SCRIPT_LOGFILE}
+			build_mn_from_source
+		fi
 		create_mn_user
 		create_mn_dirs
 	
-    		# private key initialize
-    		if [ "$generate" -eq 1 ]; then
-      			echo "Generating masternode private key" &>> ${SCRIPT_LOGFILE}
-      			generate_privkey
+    	# private key initialize
+    	if [ "$generate" -eq 1 ]; then
+      	    echo "Generating masternode private key" &>> ${SCRIPT_LOGFILE}
+      	    generate_privkey
 		fi
 	
 		# sentinel setup
@@ -566,7 +588,6 @@ function source_config() {
 function print_logo() {
 
 	# print ascii banner if a logo exists
-	echo -e "* Starting the compilation process for ${CODENAME}, stay tuned"
 	if [ -f "${SCRIPTPATH}/assets/$CODENAME.jpg" ]; then
 			jp2a -b --colors --width=56 ${SCRIPTPATH}/assets/${CODENAME}.jpg
 	else
@@ -615,6 +636,18 @@ function build_mn_from_source() {
                 echo "COMPILATION FAILED! Please open an issue at https://github.com/masternodes/vps/issues. Thank you!"
                 exit 1
         fi
+}
+
+#
+# /* download mn from given url instead of building it from code.
+#
+function download_bin_from_url() {
+    wget ${downloadUrl} -O binaries.tar.gz &>>                    ${SCRIPT_LOGFILE}
+    mkdir binaries &>>                                            ${SCRIPT_LOGFILE}
+    tar -xzf binaries.tar.gz -C binaries --strip-components=1 &>> ${SCRIPT_LOGFILE}
+    cp ./binaries/bin/* /usr/local/bin/ &>>                       ${SCRIPT_LOGFILE}
+    MNODE_DAEMON="/usr/local/bin/phored"
+    echo "MNODE_DAEMON set to ${MNODE_DAEMON}" &>>                ${SCRIPT_LOGFILE}
 }
 
 #
@@ -744,9 +777,11 @@ update=0;
 sentinel=0;
 generate=0;
 startnodes=0;
+download=0;
+downloadUrl="";
 
 # Execute getopt
-ARGS=$(getopt -o "hp:n:c:r:wsudxgk:k2:k3:k4:k5:k6:k7:k8:k9:k10:" -l "help,project:,net:,count:,release:,wipe,sentinel,update,debug,startnodes,generate,key:,key2:,key3:,key4:,key5:,key6:,key7:,key8:,key9:,key10:" -n "install.sh" -- "$@");
+ARGS=$(getopt -o "hp:n:c:r:i:wsudxgk:k2:k3:k4:k5:k6:k7:k8:k9:k10:" -l "help,project:,net:,count:,release:,download:,wipe,sentinel,update,debug,startnodes,generate,key:,key2:,key3:,key4:,key5:,key6:,key7:,key8:,key9:,key10:" -n "install.sh" -- "$@");
 
 #Bad arguments
 if [ $? -ne 0 ];
@@ -792,6 +827,15 @@ while true; do
                     then
                         release="$1";
                         SCVERSION="$1"
+                        shift;
+                    fi
+            ;;
+        -i | --download)
+            shift;
+                    if [ -n "$1" ];
+                    then
+                        download="1";
+                        downloadUrl="$1";
                         shift;
                     fi
             ;;
@@ -948,6 +992,7 @@ main() {
 		echo "SCVERSION:            ${SCVERSION}"
 		echo "RELEASE:              ${release}"
 		echo "SETUP_MNODES_COUNT:   ${SETUP_MNODES_COUNT}"
+		echo "DOWNLOAD_URL:         ${downloadUrl}"
 		echo "END DEFAULTS => "
 	fi
 
@@ -973,6 +1018,7 @@ main() {
 		echo "SETUP_MNODES_COUNT: ${count}"
 		echo "NETWORK_TYPE: ${NETWORK_TYPE}"
 		echo "NETWORK_TYPE: ${net}"
+		echo "DOWNLOAD_URL: ${downloadUrl}"
 
 		echo "END OPTIONS => "
 		echo "********************** VALUES AFTER CONFIG SOURCING: ************************"
